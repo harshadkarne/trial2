@@ -1,6 +1,7 @@
-const CACHE_NAME = 'amavidya-v2.0.0';
-const STATIC_CACHE = 'amavidya-static-v2.0.0';
-const DYNAMIC_CACHE = 'amavidya-dynamic-v2.0.0';
+const CACHE_NAME = 'amavidya-v3.0.0';
+const STATIC_CACHE = 'amavidya-static-v3.0.0';
+const DYNAMIC_CACHE = 'amavidya-dynamic-v3.0.0';
+const CONTENT_CACHE = 'amavidya-content-v3.0.0';
 
 // Files to cache for offline use
 const STATIC_FILES = [
@@ -14,6 +15,11 @@ const STATIC_FILES = [
   '/src/components/StudentDashboard.tsx',
   '/src/components/TeacherDashboard.tsx',
   '/src/components/AvatarCustomization.tsx',
+  '/src/components/VideoPlayer.tsx',
+  '/src/components/GamePlayer.tsx',
+  '/src/components/NotificationToast.tsx',
+  '/src/lib/supabase.ts',
+  '/src/data/content.ts',
   '/manifest.json'
 ];
 
@@ -22,18 +28,28 @@ self.addEventListener('install', event => {
   console.log('Service Worker: Installing...');
   
   event.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then(cache => {
-        console.log('Service Worker: Caching static files');
-        return cache.addAll(STATIC_FILES.filter(url => url !== '/'));
-      })
-      .then(() => {
-        console.log('Service Worker: Static files cached');
-        return self.skipWaiting();
-      })
-      .catch(error => {
-        console.error('Service Worker: Error caching static files', error);
-      })
+    Promise.all([
+      caches.open(STATIC_CACHE)
+        .then(cache => {
+          console.log('Service Worker: Caching static files');
+          return cache.addAll(STATIC_FILES.filter(url => url !== '/'));
+        }),
+      caches.open(CONTENT_CACHE)
+        .then(cache => {
+          console.log('Service Worker: Caching content data');
+          // Cache video and game content for offline use
+          return cache.addAll([
+            '/src/data/content.ts'
+          ]);
+        })
+    ])
+    .then(() => {
+      console.log('Service Worker: All files cached');
+      return self.skipWaiting();
+    })
+    .catch(error => {
+      console.error('Service Worker: Error caching files', error);
+    })
   );
 });
 
@@ -46,7 +62,7 @@ self.addEventListener('activate', event => {
       .then(cacheNames => {
         return Promise.all(
           cacheNames.map(cacheName => {
-            if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
+            if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE && cacheName !== CONTENT_CACHE) {
               console.log('Service Worker: Deleting old cache', cacheName);
               return caches.delete(cacheName);
             }
@@ -84,6 +100,11 @@ async function handleFetchRequest(request) {
   const url = new URL(request.url);
   
   try {
+    // For content data, use cache-first strategy
+    if (url.pathname.includes('/data/content') || url.pathname.includes('supabase')) {
+      return await cacheFirstStrategy(request, CONTENT_CACHE);
+    }
+    
     // For HTML pages and app files, use cache-first strategy
     if (isAppFile(url.pathname)) {
       return await cacheFirstStrategy(request, STATIC_CACHE);
@@ -268,24 +289,68 @@ self.addEventListener('sync', event => {
   
   if (event.tag === 'sync-user-data') {
     event.waitUntil(syncUserData());
+  } else if (event.tag === 'sync-progress-data') {
+    event.waitUntil(syncProgressData());
+  } else if (event.tag === 'sync-video-progress') {
+    event.waitUntil(syncVideoProgress());
+  } else if (event.tag === 'sync-game-progress') {
+    event.waitUntil(syncGameProgress());
   }
 });
 
 async function syncUserData() {
   try {
-    // Get stored user data
-    const userData = await getStoredUserData();
+    const userData = getStoredUserData();
     
     if (userData && navigator.onLine) {
-      // Sync with server when online (placeholder for future backend)
-      console.log('Service Worker: User data ready for sync', userData);
+      console.log('Service Worker: User data ready for sync with Supabase', userData);
+      // Here you would sync with Supabase when online
     }
   } catch (error) {
     console.error('Service Worker: User data sync failed', error);
   }
 }
 
-async function getStoredUserData() {
+async function syncProgressData() {
+  try {
+    const progressData = getStoredProgressData();
+    
+    if (progressData && navigator.onLine) {
+      console.log('Service Worker: Progress data ready for sync', progressData);
+      // Sync progress data with Supabase
+    }
+  } catch (error) {
+    console.error('Service Worker: Progress data sync failed', error);
+  }
+}
+
+async function syncVideoProgress() {
+  try {
+    const videoProgress = getStoredVideoProgress();
+    
+    if (videoProgress && navigator.onLine) {
+      console.log('Service Worker: Video progress ready for sync', videoProgress);
+      // Sync video progress with Supabase
+    }
+  } catch (error) {
+    console.error('Service Worker: Video progress sync failed', error);
+  }
+}
+
+async function syncGameProgress() {
+  try {
+    const gameProgress = getStoredGameProgress();
+    
+    if (gameProgress && navigator.onLine) {
+      console.log('Service Worker: Game progress ready for sync', gameProgress);
+      // Sync game progress with Supabase
+    }
+  } catch (error) {
+    console.error('Service Worker: Game progress sync failed', error);
+  }
+}
+
+function getStoredUserData() {
   // This integrates with localStorage data
   try {
     const currentUser = localStorage.getItem('currentUser');
@@ -300,6 +365,36 @@ async function getStoredUserData() {
   } catch (error) {
     console.error('Error getting stored user data:', error);
     return null;
+  }
+}
+
+function getStoredProgressData() {
+  try {
+    const progressData = localStorage.getItem('studentProgress');
+    return progressData ? JSON.parse(progressData) : null;
+  } catch (error) {
+    console.error('Error getting stored progress data:', error);
+    return null;
+  }
+}
+
+function getStoredVideoProgress() {
+  try {
+    const videoProgress = localStorage.getItem('videoProgress');
+    return videoProgress ? JSON.parse(videoProgress) : [];
+  } catch (error) {
+    console.error('Error getting stored video progress:', error);
+    return [];
+  }
+}
+
+function getStoredGameProgress() {
+  try {
+    const gameProgress = localStorage.getItem('gameProgress');
+    return gameProgress ? JSON.parse(gameProgress) : [];
+  } catch (error) {
+    console.error('Error getting stored game progress:', error);
+    return [];
   }
 }
 
@@ -362,6 +457,28 @@ self.addEventListener('message', event => {
   if (event.data && event.data.type === 'SYNC_USER_DATA') {
     event.waitUntil(syncUserData());
   }
+  
+  if (event.data && event.data.type === 'CACHE_CONTENT') {
+    event.waitUntil(cacheContentData());
+  }
 });
+
+// Cache content data for offline use
+async function cacheContentData() {
+  try {
+    const cache = await caches.open(CONTENT_CACHE);
+    
+    // Cache video and game content
+    const contentUrls = [
+      '/src/data/content.ts',
+      // Add any video URLs or game assets here
+    ];
+    
+    await cache.addAll(contentUrls);
+    console.log('Service Worker: Content data cached for offline use');
+  } catch (error) {
+    console.error('Service Worker: Error caching content data', error);
+  }
+}
 
 console.log('Service Worker: Script loaded');
