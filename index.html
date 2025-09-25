@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AmaVidya - Interactive STEM Learning Platform</title>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="description" content="Interactive STEM learning platform with offline capabilities, real-time progress tracking, and personalized avatars">
+    <meta name="keywords" content="STEM, education, learning, interactive, science, technology, engineering, mathematics">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='32' height='32' fill='%236366f1' rx='4'/%3E%3Ctext x='16' y='22' text-anchor='middle' font-size='20'%3E🚀%3C/text%3E%3C/svg%3E">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @keyframes fade-in {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      @keyframes slide-up {
+        from { opacity: 0; transform: translateY(40px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      @keyframes pulse-glow {
+        0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
+        50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6); }
+      }
+      
+      .animate-fade-in { animation: fade-in 1s ease-out; }
+      .animate-fade-in-delay { animation: fade-in 1s ease-out 0.3s both; }
+      .animate-slide-up { animation: slide-up 0.8s ease-out; }
+      .animate-slide-up-delay { animation: slide-up 0.8s ease-out 0.2s both; }
+      .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+      
+      .bg-animated {
+        background: linear-gradient(-45deg, #667eea, #764ba2, #6366f1, #8b5cf6);
+        background-size: 400% 400%;
+        animation: gradient 15s ease infinite;
+      }
+      
+      @keyframes gradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+      
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      
+      .hover-lift {
+        transition: all 0.3s ease;
+      }
+      
+      .hover-lift:hover {
+        transform: translateY(-10px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      }
+      
+      .floating {
+        animation: float 6s ease-in-out infinite;
+      }
+      
+      @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-20px); }
+      }
+      
+      .offline-indicator {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #ef4444;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        z-index: 1000;
+        display: none;
+      }
+      
+      body.offline .offline-indicator {
+        display: block;
+      }
+      
+      .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      
+      .modal.active {
+        display: flex;
+      }
+      
+      .modal-content {
+        background: white;
+        border-radius: 20px;
+        max-width: 500px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        animation: slide-up 0.3s ease-out;
+      }
+      
+      .dashboard {
+        display: none;
+        min-height: 100vh;
+        background: #f8fafc;
+      }
+      
+      .dashboard.active {
+        display: flex;
+      }
+      
+      .sidebar {
+        width: 280px;
+        background: white;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        position: relative;
+      }
+      
+      .main-content {
+        flex: 1;
+        padding: 2rem;
+        overflow-y: auto;
+      }
+      
+      .progress-bar {
+        height: 8px;
+        background: #e5e7eb;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+      
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #6366f1, #8b5cf6);
+        border-radius: 4px;
+        transition: width 0.5s ease;
+      }
+      
+      .card {
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+      }
+      
+      .card:hover {
+        box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+      }
+      
+      .btn {
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      
+      .btn-primary {
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        color: white;
+      }
+      
+      .btn-primary:hover {
+        background: linear-gradient(135deg, #5856eb, #7c3aed);
+        transform: translateY(-1px);
+      }
+      
+      .btn-secondary {
+        background: #f1f5f9;
+        color: #475569;
+      }
+      
+      .btn-secondary:hover {
+        background: #e2e8f0;
+      }
+      
+      .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      
+      .avatar:hover {
+        transform: scale(1.1);
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Offline Indicator -->
+    <div class="offline-indicator">
+      📡 You're offline - Limited functionality available
+    </div>
+
+    <!-- Landing Page -->
+    <div id="landingPage" class="min-h-screen bg-animated relative overflow-hidden">
+      <!-- Animated Background Elements -->
+      <div class="absolute inset-0">
+        <div class="absolute top-10 left-10 w-20 h-20 bg-white bg-opacity-10 rounded-full animate-pulse floating"></div>
+        <div class="absolute top-1/3 right-20 w-32 h-32 bg-white bg-opacity-5 rounded-full animate-bounce"></div>
+        <div class="absolute bottom-20 left-1/4 w-16 h-16 bg-white bg-opacity-10 rounded-full animate-pulse" style="animation-delay: 1s;"></div>
+        <div class="absolute top-1/2 left-1/2 w-24 h-24 bg-white bg-opacity-5 rounded-full animate-bounce" style="animation-delay: 0.5s;"></div>
+      </div>
+
+      <!-- Header -->
+      <header class="relative z-10 flex justify-between items-center p-6">
+        <div class="flex items-center gap-3">
+          <div class="text-4xl animate-pulse-glow">🚀</div>
+          <h1 class="text-3xl font-bold text-white">AmaVidya</h1>
+        </div>
+        <div class="flex items-center gap-4">
+          <div class="text-white">🌐</div>
+          <select id="languageSelect" class="bg-white bg-opacity-20 backdrop-blur-sm text-white border border-white border-opacity-30 rounded-lg px-3 py-1 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50">
+            <option value="en" class="text-gray-800">English</option>
+            <option value="od" class="text-gray-800">ଓଡ଼ିଆ</option>
+          </select>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="relative z-10 flex-1 flex items-center justify-center px-6">
+        <div class="text-center max-w-4xl">
+          <h2 id="welcomeTitle" class="text-5xl md:text-6xl font-bold text-white mb-6 animate-fade-in">
+            Welcome to Interactive STEM Learning
+          </h2>
+          <p id="welcomeTagline" class="text-xl md:text-2xl text-white text-opacity-90 mb-12 animate-fade-in-delay">
+            Explore, Learn, and Discover the Wonders of Science, Technology, Engineering, and Mathematics
+          </p>
+          
+          <div class="flex flex-col md:flex-row gap-8 justify-center items-center">
+            <!-- Student Card -->
+            <div class="group glass-effect rounded-3xl p-8 w-full max-w-sm cursor-pointer hover-lift animate-slide-up" onclick="selectRole('student')">
+              <div class="text-6xl mb-6 group-hover:animate-bounce">
+                🎓
+              </div>
+              <h3 id="studentTitle" class="text-2xl font-bold text-white mb-4">Student</h3>
+              <p id="studentDesc" class="text-white text-opacity-80 text-lg leading-relaxed">Start your learning journey with fun games and videos</p>
+              <div class="mt-6 bg-white bg-opacity-20 rounded-full px-6 py-2 text-white font-semibold group-hover:bg-white group-hover:bg-opacity-30 transition-colors">
+                Get Started →
+              </div>
+            </div>
+
+            <!-- Teacher Card -->
+            <div class="group glass-effect rounded-3xl p-8 w-full max-w-sm cursor-pointer hover-lift animate-slide-up-delay" onclick="selectRole('teacher')">
+              <div class="text-6xl mb-6 group-hover:animate-bounce">
+                👨‍🏫
+              </div>
+              <h3 id="teacherTitle" class="text-2xl font-bold text-white mb-4">Teacher</h3>
+              <p id="teacherDesc" class="text-white text-opacity-80 text-lg leading-relaxed">Manage content and track student progress</p>
+              <div class="mt-6 bg-white bg-opacity-20 rounded-full px-6 py-2 text-white font-semibold group-hover:bg-white group-hover:bg-opacity-30 transition-colors">
+                Get Started →
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Footer -->
+      <footer class="relative z-10 text-center py-6">
+        <p class="text-white text-opacity-60">© 2024 AmaVidya. Empowering minds through interactive learning.</p>
+      </footer>
+    </div>
+
+    <!-- Authentication Modal -->
+    <div id="authModal" class="modal">
+      <div class="modal-content">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-2xl">
+          <div class="flex justify-between items-center">
+            <h2 id="authTitle" class="text-2xl font-bold">Login as Student</h2>
+            <button onclick="closeAuthModal()" class="p-2 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <!-- Form -->
+        <form id="authForm" class="p-6 space-y-4">
+          <div id="authError" class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg" style="display: none;"></div>
+
+          <div id="nameField" style="display: none;">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              👤 Full Name
+            </label>
+            <input type="text" id="name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Enter your full name">
+            <div id="nameError" class="text-red-500 text-sm mt-1" style="display: none;"></div>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              👤 Username
+            </label>
+            <input type="text" id="username" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Enter your username">
+            <div id="usernameError" class="text-red-500 text-sm mt-1" style="display: none;"></div>
+          </div>
+
+          <div id="emailField" style="display: none;">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              ✉️ Email
+            </label>
+            <input type="email" id="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Enter your email">
+            <div id="emailError" class="text-red-500 text-sm mt-1" style="display: none;"></div>
+          </div>
+
+          <div id="gradeField" style="display: none;">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              📚 Grade
+            </label>
+            <select id="grade" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+              <option value="6th">6th Grade</option>
+              <option value="7th">7th Grade</option>
+              <option value="8th">8th Grade</option>
+              <option value="9th">9th Grade</option>
+              <option value="10th">10th Grade</option>
+              <option value="11th">11th Grade</option>
+              <option value="12th">12th Grade</option>
+            </select>
+          </div>
+
+          <div id="subjectField" style="display: none;">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              📖 Subject Specialization
+            </label>
+            <select id="subject" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors">
+              <option value="Science">Science</option>
+              <option value="Mathematics">Mathematics</option>
+              <option value="Technology">Technology</option>
+              <option value="Engineering">Engineering</option>
+              <option value="Physics">Physics</option>
+              <option value="Chemistry">Chemistry</option>
+              <option value="Biology">Biology</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              🔒 Password
+            </label>
+            <div class="relative">
+              <input type="password" id="password" class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors" placeholder="Enter your password">
+              <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                👁️
+              </button>
+            </div>
+            <div id="passwordError" class="text-red-500 text-sm mt-1" style="display: none;"></div>
+          </div>
+
+          <button type="submit" class="w-full btn btn-primary">
+            <span id="authSubmitText">Login</span>
+          </button>
+
+          <div class="text-center">
+            <button type="button" onclick="toggleAuthMode()" class="text-indigo-600 hover:text-indigo-800 font-medium">
+              <span id="authToggleText">Don't have an account? Register</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Student Dashboard -->
+    <div id="studentDashboard" class="dashboard">
+      <div class="sidebar">
+        <div class="p-6 border-b">
+          <div class="flex items-center gap-3 mb-4">
+            <div id="studentAvatar" class="avatar" onclick="showAvatarModal()">👦</div>
+            <div>
+              <h3 id="studentName" class="font-bold text-gray-800">Student Name</h3>
+              <p id="studentGrade" class="text-sm text-gray-600">Grade 6th</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 text-sm">
+            <span class="text-yellow-500">⭐</span>
+            <span id="studentXP" class="font-medium">0 XP</span>
+            <span class="text-gray-500">• Level <span id="studentLevel">1</span></span>
+          </div>
+        </div>
+
+        <nav class="p-4">
+          <button onclick="showStudentSection('dashboard')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors mb-2 bg-indigo-100 text-indigo-700 font-medium">
+            🏠 Dashboard
+          </button>
+          <button onclick="showStudentSection('videos')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors mb-2 text-gray-600 hover:bg-gray-100">
+            ▶️ STEM Videos
+          </button>
+          <button onclick="showStudentSection('games')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors mb-2 text-gray-600 hover:bg-gray-100">
+            🎮 Learning Games
+          </button>
+          <button onclick="showStudentSection('progress')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors mb-2 text-gray-600 hover:bg-gray-100">
+            📈 Progress
+          </button>
+          <button onclick="showStudentSection('achievements')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors mb-2 text-gray-600 hover:bg-gray-100">
+            🏆 Achievements
+          </button>
+        </nav>
+
+        <div class="absolute bottom-4 left-4 right-4 space-y-2">
+          <button onclick="goHome()" class="w-full flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            🏠 Home
+          </button>
+          <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+            🚪 Logout
+          </button>
+        </div>
+      </div>
+
+      <div class="main-content">
+        <div class="mb-8">
+          <h1 id="studentSectionTitle" class="text-3xl font-bold text-gray-800 mb-2">Dashboard</h1>
+          <p id="studentWelcome" class="text-gray-600">Welcome back! Ready to learn something new?</p>
+        </div>
+
+        <div id="studentContent">
+          <!-- Dashboard content will be loaded here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Teacher Dashboard -->
+    <div id="teacherDashboard" class="dashboard">
+      <div class="sidebar">
+        <div class="p-6 border-b">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="avatar">👨‍🏫</div>
+            <div>
+              <h3 id="teacherName" class="font-bold text-gray-800">Teacher Name</h3>
+              <p id="teacherSubject" class="text-sm text-gray-600">Science Teacher</p>
+            </div>
+          </div>
+        </div>
+
+        <nav class="p-4">
+          <button onclick="showTeacherSection('overview')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors mb-2 bg-indigo-100 text-indigo-700 font-medium">
+            📊 Overview
+          </button>
+          <button onclick="showTeacherSection('students')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors mb-2 text-gray-600 hover:bg-gray-100">
+            👥 Students
+          </button>
+          <button onclick="showTeacherSection('content')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors mb-2 text-gray-600 hover:bg-gray-100">
+            📚 Content
+          </button>
+          <button onclick="showTeacherSection('analytics')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors mb-2 text-gray-600 hover:bg-gray-100">
+            📈 Analytics
+          </button>
+        </nav>
+
+        <div class="absolute bottom-4 left-4 right-4 space-y-2">
+          <button onclick="goHome()" class="w-full flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            🏠 Home
+          </button>
+          <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+            🚪 Logout
+          </button>
+        </div>
+      </div>
+
+      <div class="main-content">
+        <div class="mb-8">
+          <h1 id="teacherSectionTitle" class="text-3xl font-bold text-gray-800 mb-2">Overview</h1>
+          <p id="teacherWelcome" class="text-gray-600">Welcome back! Here's what's happening with your students.</p>
+        </div>
+
+        <div id="teacherContent">
+          <!-- Teacher content will be loaded here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Avatar Customization Modal -->
+    <div id="avatarModal" class="modal">
+      <div class="modal-content">
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-6 rounded-t-2xl">
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-3">
+              <span>🎨</span>
+              <h2 class="text-xl font-bold">Customize Avatar</h2>
+            </div>
+            <button onclick="closeAvatarModal()" class="p-2 hover:bg-white hover:bg-opacity-20 rounded-full transition-colors">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div class="p-6">
+          <div class="text-center mb-6">
+            <div id="selectedAvatarPreview" class="w-24 h-24 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-3 text-4xl">
+              👤
+            </div>
+            <p id="selectedAvatarName" class="text-gray-600">Selected: Default</p>
+          </div>
+
+          <div class="grid grid-cols-4 gap-3 mb-6" id="avatarGrid">
+            <!-- Avatar options will be populated here -->
+          </div>
+
+          <div class="flex gap-3">
+            <button onclick="closeAvatarModal()" class="flex-1 btn btn-secondary">Cancel</button>
+            <button onclick="saveAvatar()" class="flex-1 btn btn-primary">Save Avatar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+      // Register service worker
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+              console.log('SW registered: ', registration);
+              
+              // Check for updates
+              registration.addEventListener('updatefound', () => {
+                const newWorker = registration.installing;
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // New content is available, prompt user to refresh
+                    if (confirm('New version available! Refresh to update?')) {
+                      window.location.reload();
+                    }
+                  }
+                });
+              });
+            })
+            .catch(registrationError => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+
+      // Handle offline/online status
+      function updateOnlineStatus() {
+        if (navigator.onLine) {
+          document.body.classList.remove('offline');
+          // Sync data when coming back online
+          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.controller.postMessage({ type: 'SYNC_USER_DATA' });
+          }
+        } else {
+          document.body.classList.add('offline');
+        }
+      }
+
+      window.addEventListener('online', updateOnlineStatus);
+      window.addEventListener('offline', updateOnlineStatus);
+      updateOnlineStatus();
+    </script>
+  </body>
+</html>
